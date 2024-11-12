@@ -9,13 +9,13 @@ func ApplyModulationFilter(sound [][]AudioInputPoint, props AudioFileProperties,
 	channels := make([][]AudioInputPoint, len(sound))
 
 	for i, channel := range sound {
-		channels[i] = modulateChannel(channel, props.SampleRate, modFrequency)
+		channels[i] = modulateChannel(channel, modFrequency)
 	}
 
 	return channels
 }
 
-func modulateChannel(channel []AudioInputPoint, sampleRate uint32, modFrequency float64) []AudioInputPoint {
+func modulateChannel(channel []AudioInputPoint, modFrequency float64) []AudioInputPoint {
 	sampleLength := len(channel)
 
 	sort.Slice(channel, func(i, j int) bool {
