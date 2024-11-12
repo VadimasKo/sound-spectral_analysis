@@ -60,51 +60,60 @@ func main() {
 		Segments:        make([][]audio.AudioSegment, 0),
 	}
 
-	// ====== ZRC Chart
-	zeroCrossingRate := audio.ConvertSignalToZCRGraph(
-		processedPoints,
-		ap.FileProperties.QuantizationPeriod,
-		frameDuration,
-	)
-
-	zeroCrosingRateChartOptions := chart.ChartOptions{
-		Title:           "Zero crossing rate chart",
-		ChanneledPoints: zeroCrossingRate,
+	modulatedPoints := audio.ApplyModulationFilter(processedPoints, *ap.FileProperties, 2.0)
+	modulatedTimeChartOptions := chart.ChartOptions{
+		Title:           "Modulated - Time series chart",
+		ChanneledPoints: modulatedPoints,
 		Segments:        make([][]audio.AudioSegment, 0),
 	}
+	// // ====== ZRC Chart
+	// zeroCrossingRate := audio.ConvertSignalToZCRGraph(
+	// 	processedPoints,
+	// 	ap.FileProperties.QuantizationPeriod,
+	// 	frameDuration,
+	// )
 
-	// ====== energy chart
-	energyPoints := audio.ConverSignalToEnergy(
-		processedPoints,
-		ap.FileProperties.QuantizationPeriod,
-		frameDuration,
-	)
+	// zeroCrosingRateChartOptions := chart.ChartOptions{
+	// 	Title:           "Zero crossing rate chart",
+	// 	ChanneledPoints: zeroCrossingRate,
+	// 	Segments:        make([][]audio.AudioSegment, 0),
+	// }
 
-	energyChartOptions := chart.ChartOptions{
-		Title:           "Energy chart",
-		ChanneledPoints: energyPoints,
-		Segments:        make([][]audio.AudioSegment, 0),
-	}
+	// // ====== energy chart
+	// energyPoints := audio.ConverSignalToEnergy(
+	// 	processedPoints,
+	// 	ap.FileProperties.QuantizationPeriod,
+	// 	frameDuration,
+	// )
 
-	// ====== energy chart with segments
-	energySegments := audio.GetSignalThresholdSegments(energyPoints, energyThreshold)
-	segmentedEnergyChartOptions := chart.ChartOptions{
-		Title:           "Segmented Energy Chart",
-		ChanneledPoints: energyPoints,
-		Segments:        energySegments,
-	}
+	// energyChartOptions := chart.ChartOptions{
+	// 	Title:           "Energy chart",
+	// 	ChanneledPoints: energyPoints,
+	// 	Segments:        make([][]audio.AudioSegment, 0),
+	// }
+
+	// // ====== energy chart with segments
+	// energySegments := audio.GetSignalThresholdSegments(energyPoints, energyThreshold)
+	// segmentedEnergyChartOptions := chart.ChartOptions{
+	// 	Title:           "Segmented Energy Chart",
+	// 	ChanneledPoints: energyPoints,
+	// 	Segments:        energySegments,
+	// }
 
 	page := components.NewPage()
 	page.AddCharts(
 		timeChartOptions.CreateAudioLineChart(),
-		energyChartOptions.CreateAudioLineChart(),
-		zeroCrosingRateChartOptions.CreateAudioLineChart(),
-		segmentedEnergyChartOptions.CreateAudioLineChart(),
+		modulatedTimeChartOptions.CreateAudioLineChart(),
+	// energyChartOptions.CreateAudioLineChart(),
+	// zeroCrosingRateChartOptions.CreateAudioLineChart(),
+	// segmentedEnergyChartOptions.CreateAudioLineChart(),
 	)
 
 	if err := os.MkdirAll(outputPath, os.ModePerm); err != nil {
 		panic(err)
 	}
+
+	audio.WriteWavFile(outputPath+"/modulated.wav", *ap.FileProperties, modulatedPoints)
 
 	f, err := os.Create(outputPath + "/chart.html")
 	if err != nil {

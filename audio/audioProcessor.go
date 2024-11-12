@@ -55,11 +55,11 @@ func calculateBufferSize(bitDepth uint16, channelCount int, sampleCount int) int
 func getMaxAmplitude(bitDepth uint16) float64 {
 	switch bitDepth {
 	case 16:
-		return float64(math.MaxUint16)
+		return float64(math.MaxInt16)
 	case 24:
-		return 16777215
+		return 8388607
 	case 32:
-		return float64(math.MaxUint32)
+		return float64(math.MaxInt32)
 	default:
 		panic("Unsupported bit depth")
 	}
