@@ -6,10 +6,7 @@
 
 ## About 🔍 <a name='1'></a>
 This is a TUI application which reads `.wav` audio file and creates `.html` file with:
- - Time series chart
- - Energy chart
- - Zero crossing rate chart
- - Segmented energy chart
+<TODO>
 
 ## Running and Debuging 🛠️ <a name="2"></a>
 | Script            | Description      |
