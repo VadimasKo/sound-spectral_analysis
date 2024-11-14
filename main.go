@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-echarts/go-echarts/v2/components"
 	"io"
 	"modulation_effect/audio"
 	"modulation_effect/chart"
 	"modulation_effect/filePicker"
 	"os"
 	"sync"
-
-	"github.com/go-echarts/go-echarts/v2/components"
 )
 
 var outputPath = "./output"
@@ -60,60 +59,41 @@ func main() {
 		Segments:        make([][]audio.AudioSegment, 0),
 	}
 
-	modulatedPoints := audio.ApplyModulationFilter(processedPoints, *ap.FileProperties, 2.0)
-	modulatedTimeChartOptions := chart.ChartOptions{
-		Title:           "Modulated - Time series chart",
-		ChanneledPoints: modulatedPoints,
+	segmentChannel := make([][]audio.AudioInputPoint, 1)
+	segmentChannel[0] = audio.GetSignalSegment(2.0, 0.02, float64(ap.FileProperties.SampleRate), processedPoints[0])
+	segmentChartOptions := chart.ChartOptions{
+		Title:           "Segment time chart",
+		ChanneledPoints: segmentChannel,
 		Segments:        make([][]audio.AudioSegment, 0),
 	}
-	// // ====== ZRC Chart
-	// zeroCrossingRate := audio.ConvertSignalToZCRGraph(
-	// 	processedPoints,
-	// 	ap.FileProperties.QuantizationPeriod,
-	// 	frameDuration,
-	// )
 
-	// zeroCrosingRateChartOptions := chart.ChartOptions{
-	// 	Title:           "Zero crossing rate chart",
-	// 	ChanneledPoints: zeroCrossingRate,
-	// 	Segments:        make([][]audio.AudioSegment, 0),
-	// }
+	windowChannel := make([][]audio.AudioInputPoint, 1)
+	windowChannel[0] = audio.ApplyWindow(segmentChannel[0])
+	windowChartOptions := chart.ChartOptions{
+		Title:           "Segment (window) time chart",
+		ChanneledPoints: windowChannel,
+		Segments:        make([][]audio.AudioSegment, 0),
+	}
 
-	// // ====== energy chart
-	// energyPoints := audio.ConverSignalToEnergy(
-	// 	processedPoints,
-	// 	ap.FileProperties.QuantizationPeriod,
-	// 	frameDuration,
-	// )
-
-	// energyChartOptions := chart.ChartOptions{
-	// 	Title:           "Energy chart",
-	// 	ChanneledPoints: energyPoints,
-	// 	Segments:        make([][]audio.AudioSegment, 0),
-	// }
-
-	// // ====== energy chart with segments
-	// energySegments := audio.GetSignalThresholdSegments(energyPoints, energyThreshold)
-	// segmentedEnergyChartOptions := chart.ChartOptions{
-	// 	Title:           "Segmented Energy Chart",
-	// 	ChanneledPoints: energyPoints,
-	// 	Segments:        energySegments,
-	// }
+	freqChannel := make([][]audio.AudioInputPoint, 1)
+	freqChannel[0] = audio.ComputeAmplitudeSpectrum(windowChannel[0], float64(ap.FileProperties.SampleRate))
+	freqChartOptions := chart.ChartOptions{
+		Title:           "Frequency chart",
+		ChanneledPoints: freqChannel,
+		Segments:        make([][]audio.AudioSegment, 0),
+	}
 
 	page := components.NewPage()
 	page.AddCharts(
 		timeChartOptions.CreateAudioLineChart(),
-		modulatedTimeChartOptions.CreateAudioLineChart(),
-	// energyChartOptions.CreateAudioLineChart(),
-	// zeroCrosingRateChartOptions.CreateAudioLineChart(),
-	// segmentedEnergyChartOptions.CreateAudioLineChart(),
+		segmentChartOptions.CreateAudioLineChart(),
+		windowChartOptions.CreateAudioLineChart(),
+		freqChartOptions.CreateFrequencyChart(),
 	)
 
 	if err := os.MkdirAll(outputPath, os.ModePerm); err != nil {
 		panic(err)
 	}
-
-	audio.WriteWavFile(outputPath+"/modulated.wav", *ap.FileProperties, modulatedPoints)
 
 	f, err := os.Create(outputPath + "/chart.html")
 	if err != nil {
